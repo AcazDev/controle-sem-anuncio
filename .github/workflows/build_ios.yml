@@ -1,0 +1,43 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build-ios:
+    name: Compilar IPA (iOS)
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout do Repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Instalar Dependências
+        run: flutter pub get
+
+      - name: Compilar App iOS (Release)
+        run: flutter build ios --release --no-codesign
+
+      - name: Empacotar .IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r ControleSemAnuncio.ipa Payload
+          ls -lh ControleSemAnuncio.ipa
+
+      - name: Disponibilizar .IPA para Download
+        uses: actions/upload-artifact@v4
+        with:
+          name: ControleSemAnuncio-iOS-IPA
+          path: ControleSemAnuncio.ipa
+          retention-days: 30
